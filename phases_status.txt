@@ -1,0 +1,74 @@
+========================================================================
+     AETHER DOCS - DOCUMENT MANAGEMENT DASHBOARD DEVELOPMENT STATUS
+========================================================================
+
+Total Phases: 12
+Completed Phases: 10
+Remaining Phases: 2
+
+------------------------------------------------------------------------
+[X] COMPLETED PHASES (Phases 1 - 10)
+------------------------------------------------------------------------
+1. Phase 1: Project Init, Directory Structure & Dependency Setup
+   - Scaffolding of "document-management-dashboard" directory
+   - Backend Maven configuration (pom.xml) and Spring Boot Application setup
+   - Frontend React + Vite initial project structure setup and dependency audits
+
+2. Phase 2: MySQL Schema Setup & Spring Boot JPA Entities
+   - Verification of active MySQL connection credentials
+   - Mapping JPA Database Entities for Documents and Notifications
+   - Table schema definitions and field alignments
+
+3. Phase 3: Spring Boot Repositories & Local File Storage Services
+   - Spring Data JPA Repository bindings for Document and Notification tables
+   - Disk-based StorageService for multi-part file sanitization, folder creation, and downloads
+   - Persistent NotificationService CRUD and transition handlers
+
+4. Phase 4: Spring Boot REST API: Upload, Download & List Documents
+   - REST Controller endpoints for file listing, upload, and downloads
+   - Multipart file parsing and secure streaming content headers
+   - Smart upload tracking for bulk uploads in the upload controller
+
+5. Phase 5: Spring Boot WebSockets Configuration & Notification API
+   - Native WebSocket session connection handler (NotificationWebSocketHandler)
+   - Setup of /ws registration allowing full frontend cross-origin requests
+   - REST endpoints for reading individual and bulk notifications
+   - Jackson ObjectMapper serializing DB alerts to real-time socket broadcasts
+
+6. Phase 6: Frontend: Global Design System & CSS Layout Shell
+   - Centralized layout stylesheet (index.css)
+   - Accent glassmorphic variables, Plus Jakarta Sans fonts, and dark backgrounds
+   - Dynamic fluid scrollbars, glow buttons, and CSS layout grids
+
+7. Phase 7: Frontend: Live Notification Panel & Dropdown Component
+   - Toggleable glassmorphic system notification panel in header
+   - Real-time unread badge counts syncing on mount and socket events
+   - Clear indicators for notification states and mark-as-read updates
+
+8. Phase 8: Frontend: Drag-and-Drop Area & Document Library Table
+   - Interactive PDF-only drag-and-drop selector zone with custom hover states
+   - Complete library list table showing names, sizes, dates, and download hooks
+   - Handlers for file type checks and immediate upload triggers
+
+9. Phase 9: Frontend: Axios Progress Tracking & Custom Indicators
+   - Axios file upload connection orchestration with onUploadProgress callbacks
+   - Dynamic individual file progress panels updating percentages in real-time
+   - Badges for file states: uploading, complete, pending, or failed
+
+10. Phase 10: Smart Bulk Processing: Async uploads, WS listeners & toasts
+    - Automatic group upload detection for uploads exceeding 3 files
+    - Collapsible file progress drawer to prevent page crowding
+    - Real-time WebSocket toast alerts popping up on bulk completion
+    - Floating background upload banner indicating active processing states
+
+------------------------------------------------------------------------
+[ ] REMAINING PHASES (Phases 11 - 12)
+------------------------------------------------------------------------
+11. Phase 11: Testing & Polish
+    - Setting up integration unit tests for REST endpoints (Upload/Download/Notifications)
+    - Visual polishing, custom loading shimmers, and micro-transitions
+
+12. Phase 12: Live Link
+    - Exposing the running dashboard on public URLs using localtunnel or pinggy
+    - Complete execution walkthrough README and deployment checklist
+========================================================================

@@ -2,6 +2,8 @@ package com.example.dashboard.service;
 
 import com.example.dashboard.model.Notification;
 import com.example.dashboard.repository.NotificationRepository;
+import com.example.dashboard.websocket.NotificationWebSocketHandler;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,17 +16,23 @@ import java.util.Optional;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final NotificationWebSocketHandler webSocketHandler;
+    private final ObjectMapper objectMapper;
 
     @Autowired
-    public NotificationService(NotificationRepository notificationRepository) {
+    public NotificationService(NotificationRepository notificationRepository,
+                              NotificationWebSocketHandler webSocketHandler,
+                              ObjectMapper objectMapper) {
         this.notificationRepository = notificationRepository;
+        this.webSocketHandler = webSocketHandler;
+        this.objectMapper = objectMapper;
     }
 
     public Notification createNotification(String message, String type) {
         Notification notification = new Notification(message, type);
         Notification saved = notificationRepository.save(notification);
         
-        // Broadcast through WebSocket (Placeholder for Phase 5)
+        // Broadcast the new notification to all active sockets
         broadcast(saved);
         
         return saved;
@@ -57,14 +65,22 @@ public class NotificationService {
         triggerUpdate();
     }
 
-    // Real-time broadcast hooks
+    /**
+     * Broadcasts a full notification JSON object to the frontend.
+     */
     private void broadcast(Notification notification) {
-        // Will be fully implemented in Phase 5 using WebSocket SimpMessagingTemplate
-        System.out.println("Broadcasting notification in real-time: " + notification.getMessage());
+        try {
+            String json = objectMapper.writeValueAsString(notification);
+            webSocketHandler.broadcast(json);
+        } catch (Exception e) {
+            System.err.println("Error serializing notification for WebSocket: " + e.getMessage());
+        }
     }
 
+    /**
+     * Sends a refresh command to force the client to reload notification states.
+     */
     private void triggerUpdate() {
-        // Will be implemented in Phase 5 to update total unread badges
-        System.out.println("Broadcasting notification update...");
+        webSocketHandler.broadcast("{\"action\":\"REFRESH\"}");
     }
 }
