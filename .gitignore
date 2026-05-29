@@ -1,0 +1,33 @@
+# IDE / Editor files
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Node dependencies
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Java build directories
+target/
+*.class
+.mvn/
+.metadata/
+.recommenders/
+bin/
+.gradle/
+build/
+
+# Uploaded files
+backend/uploads/
+uploads/
+
+# Local database / temp files
+*.db
+*.log
+.gemini/
