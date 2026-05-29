@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
 @RequestMapping("/api/documents")
-@CrossOrigin(origins = "*") // Allow React frontend CORS
+@CrossOrigin(origins = "*", allowedHeaders = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS}) // Allow React frontend CORS
 public class DocumentController {
 
     private final DocumentRepository documentRepository;
@@ -106,5 +106,59 @@ public class DocumentController {
                 .contentType(MediaType.parseMediaType(document.getType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + document.getName() + "\"")
                 .body(resource);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteDocument(@PathVariable Long id) {
+        return documentRepository.findById(id).map(document -> {
+            try {
+                // Delete physical file from disk
+                storageService.delete(document.getFilePath());
+                
+                // Delete record from database
+                documentRepository.delete(document);
+                
+                // Create a notification and broadcast it via WebSockets
+                notificationService.createNotification("1 file deleted", "info");
+                
+                return ResponseEntity.ok().build();
+            } catch (Exception e) {
+                return ResponseEntity.status(500).body("Failed to delete file from disk: " + e.getMessage());
+            }
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/bulk-delete")
+    public ResponseEntity<?> bulkDeleteDocuments(@RequestBody List<Long> ids) {
+        int deletedCount = 0;
+        List<String> failedFiles = new ArrayList<>();
+        
+        for (Long id : ids) {
+            Optional<Document> docOpt = documentRepository.findById(id);
+            if (docOpt.isPresent()) {
+                Document document = docOpt.get();
+                try {
+                    // Physical delete from disk
+                    storageService.delete(document.getFilePath());
+                    
+                    // Database delete
+                    documentRepository.delete(document);
+                    deletedCount++;
+                } catch (Exception e) {
+                    failedFiles.add(document.getName());
+                }
+            }
+        }
+        
+        if (deletedCount > 0) {
+            String msg = deletedCount + " " + (deletedCount == 1 ? "file" : "files") + " deleted";
+            notificationService.createNotification(msg, "info");
+        }
+        
+        if (!failedFiles.isEmpty()) {
+            return ResponseEntity.status(500).body("Deleted " + deletedCount + " files. Failed to delete: " + String.join(", ", failedFiles));
+        }
+        
+        return ResponseEntity.ok().build();
     }
 }

@@ -46,13 +46,8 @@ public class StorageService {
             fileExtension = originalFilename.substring(dotIndex);
         }
         String cleanNameWithoutExt = dotIndex > 0 ? originalFilename.substring(0, dotIndex) : originalFilename;
-        
-        // Remove special characters, keep alphanumeric, spaces, dashes, and underscores
         cleanNameWithoutExt = cleanNameWithoutExt.replaceAll("[^a-zA-Z0-9\\s-_]", "");
-        
-        // Create unique name
         String storedFilename = cleanNameWithoutExt + "-" + UUID.randomUUID() + fileExtension;
-
         try {
             if (file.isEmpty()) {
                 throw new RuntimeException("Failed to store empty file " + originalFilename);
@@ -63,7 +58,6 @@ public class StorageService {
         } catch (IOException e) {
             throw new RuntimeException("Failed to store file " + originalFilename, e);
         }
-
         return storedFilename;
     }
 
@@ -82,6 +76,15 @@ public class StorageService {
             }
         } catch (MalformedURLException e) {
             throw new RuntimeException("Could not read file: " + filename, e);
+        }
+    }
+
+    public void delete(String filename) {
+        try {
+            Path file = load(filename);
+            Files.deleteIfExists(file);
+        } catch (IOException e) {
+            throw new RuntimeException("Could not delete file: " + filename, e);
         }
     }
 }
