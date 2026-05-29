@@ -107,24 +107,30 @@ export default function App() {
           // If refresh event, fetch latest notification read statuses
           fetchNotifications();
         } else if (data.id && data.message) {
-          // If it's a notification object, prepend to list
-          setNotifications(prev => [data, ...prev]);
-          
-          // Trigger a beautiful sliding toast alert (only for consolidated bulk success, errors, or system alerts!)
-          const isIndividualSuccess = data.type === 'info' && data.message.includes('uploaded successfully') && !data.message.includes('files uploaded');
-          if (!isIndividualSuccess) {
-            const toastId = Math.random().toString(36).substr(2, 9);
-            setToasts(prev => [...prev, { id: toastId, message: data.message, type: data.type, timestamp: data.timestamp }]);
-          }
-          
-          // Count unread
-          setUnreadCount(prev => prev + 1);
+          // Check if notification ID has already been received to prevent duplicates from StrictMode connections
+          setNotifications(prev => {
+            if (prev.some(n => n.id === data.id)) {
+              return prev; // Ignore duplicates completely
+            }
 
-          // Clear global banner if a bulk upload completes matching the message
-          if (data.type === 'success' && data.message.includes('uploaded successfully')) {
-            setBulkProcessing(null);
-            fetchDocuments(); // Refresh libraries automatically
-          }
+            // Uniquely trigger a sliding toast alert (only for consolidated bulk success, errors, or system alerts!)
+            const isIndividualSuccess = data.type === 'info' && data.message.includes('uploaded successfully') && !data.message.includes('files uploaded');
+            if (!isIndividualSuccess) {
+              const toastId = Math.random().toString(36).substr(2, 9);
+              setToasts(toastsPrev => [...toastsPrev, { id: toastId, message: data.message, type: data.type, timestamp: data.timestamp }]);
+            }
+            
+            // Uniquely increment unread count
+            setUnreadCount(countPrev => countPrev + 1);
+
+            // Clear global banner if a bulk upload completes matching the message
+            if (data.type === 'success' && data.message.includes('uploaded successfully')) {
+              setBulkProcessing(null);
+              fetchDocuments(); // Refresh libraries automatically
+            }
+
+            return [data, ...prev];
+          });
         }
       } catch (e) {
         console.warn('Received standard text payload:', event.data);
@@ -140,9 +146,7 @@ export default function App() {
     };
 
     return () => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.close();
-      }
+      ws.close(); // Unconditionally close to clean up both connecting and open sockets in StrictMode
     };
   }, [fetchDocuments, fetchNotifications]);
 
