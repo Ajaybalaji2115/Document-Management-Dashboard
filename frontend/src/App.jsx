@@ -251,27 +251,17 @@ export default function App() {
     if (pdfFiles.length > 3) {
       // SMART BULK UPLOAD MODE
       const bulkGroupId = Math.random().toString(36).substr(2, 9);
-      
-      // Immediately trigger sliding toast
       const bulkToastId = Math.random().toString(36).substr(2, 9);
       setToasts(prev => [...prev, { id: bulkToastId, message: `Upload in progress — processing ${pdfFiles.length} files in background.`, type: 'info' }]);
+      setBulkProcessing({ id: bulkGroupId, total: pdfFiles.length });
+      setIsProgressCollapsed(false); // Expanded and fully visible by default!
       
-      // Immediately set background banner state
-      setBulkProcessing({
-        id: bulkGroupId,
-        total: pdfFiles.length
-      });
-
-      // Collapse progress panels by default in bulk mode to keep UI minimal
-      setIsProgressCollapsed(true);
-
-      // Concurrent async triggers
       pdfFiles.forEach(file => {
         executeUpload(file, bulkGroupId, pdfFiles.length);
       });
     } else {
       // STANDARD SINGLE / SMALL MULTI-UPLOAD
-      setIsProgressCollapsed(false);
+      setIsProgressCollapsed(false); // Expanded and fully visible by default!
       pdfFiles.forEach(file => {
         executeUpload(file, null, null);
       });
@@ -446,27 +436,81 @@ export default function App() {
               </div>
 
               <div className={`collapsible-content ${isProgressCollapsed ? 'collapsed' : ''}`} style={{ marginTop: '1rem' }}>
-                <div className="progress-list">
-                  {uploads.map(item => (
-                    <div key={item.id} className="progress-item">
-                      <div className="progress-item-meta">
-                        <div className="progress-file-info">
-                          <span className="progress-file-name" title={item.name}>{item.name}</span>
-                          <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', marginTop: '0.15rem' }}>
-                            <span className="progress-file-size" style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>{formatBytes(item.size)}</span>
-                            <span style={{ color: 'var(--color-text-muted)', fontSize: '0.6rem' }}>•</span>
-                            <span className="progress-file-type" style={{ fontSize: '0.7rem', color: 'var(--secondary)', fontWeight: 600 }}>{item.type || 'application/pdf'}</span>
-                          </div>
-                        </div>
-                        <span className={`progress-status-badge ${item.status}`}>
-                          {item.status === 'uploading' ? `${item.progress}%` : item.status}
-                        </span>
+                <div className="progress-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                  {/* Summary Status Line */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>
+                    <span>
+                      {uploads.filter(u => u.status === 'complete').length} of {uploads.length} files complete
+                    </span>
+                    {uploads.some(u => u.status === 'complete' || u.status === 'failed') && (
+                      <button 
+                        onClick={() => setUploads(prev => prev.filter(u => u.status !== 'complete' && u.status !== 'failed'))}
+                        style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontWeight: 600, fontSize: '0.75rem' }}
+                      >
+                        Clear Completed
+                      </button>
+                    )}
+                  </div>
+                  
+
+                      {/* Left icon wrapper */}
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: 'rgba(239, 68, 68, 0.08)',
+                        color: 'var(--status-error)',
+                        padding: '0.5rem',
+                        borderRadius: '6px'
+                      }}>
+                        <FileText size={18} />
                       </div>
-                      <div className="progress-bar-wrapper">
-                        <div 
-                          className={`progress-bar ${item.status}`} 
-                          style={{ width: `${item.progress}%` }}
-                        />
+
+                      {/* Middle info */}
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.25rem', overflow: 'hidden' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '80%' }} title={item.name}>
+                            {item.name}
+                          </span>
+                          <span style={{ fontSize: '0.7rem', fontWeight: 700, color: item.status === 'failed' ? 'var(--status-error)' : 'var(--color-text-secondary)' }}>
+                            {item.status === 'uploading' ? `${item.progress}%` : item.status.toUpperCase()}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>{formatBytes(item.size)}</span>
+                          <span style={{ color: 'var(--color-text-muted)', fontSize: '0.6rem' }}>•</span>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--secondary)', fontWeight: 600 }}>{item.type || 'application/pdf'}</span>
+                        </div>
+                      </div>
+
+                      {/* Right status icon */}
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        {item.status === 'uploading' && (
+                          <div className="banner-spinner" style={{ width: '14px', height: '14px' }} />
+                        )}
+                        {item.status === 'complete' && (
+                          <CheckCircle2 size={16} color="var(--status-success)" />
+                        )}
+                        {item.status === 'failed' && (
+                          <AlertCircle size={16} color="var(--status-error)" />
+                        )}
+                      </div>
+
+                      {/* Animated bottom progress bar line */}
+                      <div style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '3px',
+                        background: 'rgba(255, 255, 255, 0.05)'
+                      }}>
+                        <div style={{
+                          height: '100%',
+                          width: `${item.progress}%`,
+                          background: item.status === 'failed' ? 'var(--status-error)' : 'linear-gradient(to right, var(--primary), var(--secondary))',
+                          transition: 'width 0.2s ease-out'
+                        }} />
                       </div>
                     </div>
                   ))}
