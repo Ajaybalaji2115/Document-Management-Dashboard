@@ -81,9 +81,6 @@ public class DocumentController {
                     String successMessage = totalCount + " files uploaded successfully";
                     notificationService.createNotification(successMessage, "success");
                 }
-            } else if (bulkGroupId == null) {
-                // If it is a standard individual upload, log an info alert
-                notificationService.createNotification("Document '" + file.getOriginalFilename() + "' uploaded successfully", "info");
             }
 
             return ResponseEntity.status(HttpStatus.CREATED).body(savedDocument);

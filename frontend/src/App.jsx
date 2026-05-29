@@ -106,7 +106,7 @@ export default function App() {
           
           // Trigger a beautiful sliding toast alert
           const toastId = Math.random().toString(36).substr(2, 9);
-          setToasts(prev => [...prev, { id: toastId, message: data.message, type: data.type }]);
+          setToasts(prev => [...prev, { id: toastId, message: data.message, type: data.type, timestamp: data.timestamp }]);
           
           // Count unread
           setUnreadCount(prev => prev + 1);
@@ -251,6 +251,10 @@ export default function App() {
     if (pdfFiles.length > 3) {
       // SMART BULK UPLOAD MODE
       const bulkGroupId = Math.random().toString(36).substr(2, 9);
+      
+      // Immediately trigger sliding toast
+      const bulkToastId = Math.random().toString(36).substr(2, 9);
+      setToasts(prev => [...prev, { id: bulkToastId, message: `Upload in progress — processing ${pdfFiles.length} files in background.`, type: 'info' }]);
       
       // Immediately set background banner state
       setBulkProcessing({
@@ -572,7 +576,14 @@ export default function App() {
             ) : (
               <Info size={16} color="var(--status-info)" />
             )}
-            <span>{toast.message}</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+              <span>{toast.message}</span>
+              {toast.timestamp && (
+                <span style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', opacity: 0.8 }}>
+                  {formatDate(toast.timestamp)}
+                </span>
+              )}
+            </div>
           </div>
         ))}
       </div>
